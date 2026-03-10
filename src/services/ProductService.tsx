@@ -8,21 +8,29 @@ type ProductData = {
 
 export async function addProduct(data: ProductData) {
     try {
+        console.log("--- addProduct: DATA INPUT ---")
+        console.log(data)
+
         const result = safeParse(DraftProductSchema, {
             name: data.name,
             price: +data.price
         })
+
+        console.log("--- addProduct: VALIBOT RESULT ---")
+        console.log(result)
+
         if (result.success) {
             const url = `${import.meta.env.VITE_API_URL}/api/products`
-            const { data } = await axios.post(url, {
+            await axios.post(url, {
                 name: result.output.name,
                 price: result.output.price
             })
-
         } else {
+            console.error('--- addProduct: VALIBOT ERROR ---')
+            console.error(result.issues)
             throw new Error('Datos no válidos')
         }
-        console.log(data)
+
     } catch (error) {
         console.log(error)
     }
