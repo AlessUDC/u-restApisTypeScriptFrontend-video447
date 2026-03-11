@@ -1,5 +1,5 @@
-import { Link, useLoaderData } from "react-router-dom"
-import { getProducts } from "../services/ProductService"
+import { Link, useLoaderData, type ActionFunctionArgs } from "react-router-dom"
+import { getProducts, updateProductAvailability } from "../services/ProductService"
 import type { Product } from "../types"
 import ProductDetails from "../components/ProductDetails"
 
@@ -7,6 +7,13 @@ export async function loader() {
     const products = await getProducts()
     console.log('--- loader products ---', products)
     return { products }
+}
+
+// Para cambiar 'Disponible' o 'No Disponible'
+export async function action({ request }: ActionFunctionArgs) {
+    const data = Object.fromEntries(await request.formData())
+    await updateProductAvailability(+data.id)
+    return {}
 }
 
 export default function Products() {

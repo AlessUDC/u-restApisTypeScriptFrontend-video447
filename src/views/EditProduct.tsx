@@ -1,7 +1,8 @@
 import { Link, Form, useActionData, type ActionFunctionArgs, redirect, type LoaderFunctionArgs, useLoaderData } from "react-router-dom"
 import ErrorMessage from "../components/ErrorMessage"
-import { addProduct, getProductsById } from "../services/ProductService"
+import { getProductsById, updateProduct } from "../services/ProductService"
 import type { Product } from "../types"
+import ProductForm from "../components/ProductForm"
 
 export async function loader({ params }: LoaderFunctionArgs) {
     if (params.id !== undefined) {
@@ -9,7 +10,6 @@ export async function loader({ params }: LoaderFunctionArgs) {
         console.log(product)
 
         if (!product) {
-            // throw new Response('', { status: 404, statusText: 'Producto No Encontrado' })
             return redirect('/')
         }
 
@@ -18,9 +18,8 @@ export async function loader({ params }: LoaderFunctionArgs) {
     return {}
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, params }: ActionFunctionArgs) {
     const data = Object.fromEntries(await request.formData())
-
     let error = ''
     if (Object.values(data).includes('')) {
         error = 'Todos los campos son obligatorios'
@@ -29,10 +28,17 @@ export async function action({ request }: ActionFunctionArgs) {
         return error
     }
 
-    await addProduct(data)
-
-    return redirect('/')
+    console.log(params.id)
+    if (params.id !== undefined) {
+        await updateProduct(+params.id, data)
+        return redirect('/')
+    }
 }
+
+const availabilityOptions = [
+    { name: 'Disponible', value: true },
+    { name: 'No Disponible', value: false }
+]
 
 export default function EditProduct() {
     const product = useLoaderData() as Product
@@ -41,7 +47,9 @@ export default function EditProduct() {
     return (
         <>
             <div className="flex justify-between items-center">
-                <h1 className="text-4xl font-extrabold text-gray-600">Editar Producto</h1>
+                <h1 className="text-4xl font-extrabold text-gray-600">
+                    Editar Producto
+                </h1>
                 <Link
                     to={'/'}
                     className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-3 rounded-lg shadow-sm"
@@ -57,39 +65,29 @@ export default function EditProduct() {
                 method='POST'
             >
 
+                <ProductForm product={product} />
+
                 <div className="mb-4">
                     <label
                         className="text-gray-800"
-                        htmlFor="name"
-                    >Nombre Producto:</label>
-                    <input
-                        id="name"
-                        type="text"
+                        htmlFor="availability"
+                    >Disponibilidad:</label>
+                    <select
+                        id="availability"
                         className="mt-2 block w-full p-3 bg-gray-50"
-                        placeholder="Nombre del Producto"
-                        name="name"
-                        defaultValue={product.name}
-                    />
-                </div>
-                <div className="mb-4">
-                    <label
-                        className="text-gray-800"
-                        htmlFor="price"
-                    >Precio:</label>
-                    <input
-                        id="price"
-                        type="number"
-                        className="mt-2 block w-full p-3 bg-gray-50"
-                        placeholder="Precio Producto. ej. 200, 300"
-                        name="price"
-                        defaultValue={product.price}
-                    />
+                        name="availability"
+                        defaultValue={product?.availability.toString()}
+                    >
+                        {availabilityOptions.map(option => (
+                            <option key={option.name} value={option.value.toString()}>{option.name}</option>
+                        ))}
+                    </select>
                 </div>
 
                 <input
                     type="submit"
-                    className="mt-5 w-full bg-indigo-600 p-2 text-white font-bold text-lg cursor-pointer rounded"
-                    value="Registrar Producto"
+                    className="mt-5 w-full bg-indigo-600 hover:bg-indigo-700 transition-colors duration-300 ease-in-out p-2 text-white font-bold text-lg cursor-pointer rounded"
+                    value="Guardar Cambios"
                 />
             </Form>
         </>
